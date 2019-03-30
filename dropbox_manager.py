@@ -1,7 +1,8 @@
 import dropbox
 import os
 import datetime
-
+import time
+import utils
 
 class DropboxManager:
     def __init__(self, token):
@@ -98,9 +99,17 @@ class DropboxManager:
                     message += 'Overwriting file. '
 
             if download:
+
+                start = time.time()
                 with open(local_filename, 'wb') as f:
-                    f.write(self.download(dropbox_folder, '', file))
-                message += 'Downloaded'
+                    data = self.download(dropbox_folder, '', file)
+                    f.write(data)
+                    time_elapsed = time.time() - start
+                    speed = len(data) / time_elapsed
+                    speed, units = utils.good_units(speed)
+                    units += '/s'
+                    size, size_units = utils.good_units(len(data))
+                message += 'Downloaded. Size: %3.2f%s (%3.2f%s)' % (size, size_units, speed, units)
 
             print(message)
             file_number += 1
