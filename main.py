@@ -1,90 +1,6 @@
-# import boto3
-import dropbox
+from dropbox_manager import DropboxManager
+import boto_manager
 import os
-import datetime
-
-
-
-def upload(dbx, fullname, folder, subfolder, name, overwrite=False):
-    """Upload a file.
-
-    Return the request response, or None in case of error.
-    """
-    path = '/%s/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'), name)
-    while '//' in path:
-        path = path.replace('//', '/')
-    mode = (dropbox.files.WriteMode.overwrite if overwrite else dropbox.files.WriteMode.add)
-    mtime = os.path.getmtime(fullname)
-    with open(fullname, 'rb') as f:
-        data = f.read()
-
-    try:
-        res = dbx.files_upload(data, path, mode, client_modified=datetime.datetime.now(), mute=True)
-    except dropbox.exceptions.ApiError as err:
-        print('*** API error', err)
-        return None
-    print('uploaded as', res.name.encode('utf8'))
-    return res
-
-def download(dbx, folder, subfolder, name):
-    """Download a file.
-
-    Return the bytes of the file, or None if it doesn't exist.
-    """
-    path = '/%s/%s/%s' % (folder, subfolder.replace(os.path.sep, '/'), name)
-    while '//' in path:
-        path = path.replace('//', '/')
-
-    try:
-        md, res = dbx.files_download(path)
-    except dropbox.exceptions.HttpError as err:
-        print('*** HTTP error', err)
-        return None
-
-    data = res.content
-    # print(len(data), 'bytes; md:', md)
-    return data
-
-def list_files(dbx, folder):
-    """List a folder.
-
-    Return a dict mapping unicode filenames to
-    FileMetadata|FolderMetadata entries.
-    """
-    path = folder
-    while '//' in path:
-        path = path.replace('//', '/')
-    path = path.rstrip('/')
-
-    rv = {}
-    has_more = True
-    while has_more:
-        try:
-            res = dbx.files_list_folder(path)
-        except dropbox.exceptions.ApiError as err:
-            print('Folder listing failed for %s -- assumed empty: %s', (path, err))
-            return dict()
-        else:
-            has_more = res.has_more
-            for entry in res.entries:
-                rv[entry.name] = entry
-    return rv
-
-
-def download_folder(dbx, dropbox_folder, local_folder):
-    ls = list_files(dbx, dropbox_folder)
-
-    if len(ls) == 0:
-        return
-
-    if not os.path.exists(local_folder):
-        os.makedirs(local_folder)
-
-    for file in ls:
-        with open(local_folder + '/' + file, 'wb') as f:
-            f.write(download(dbx, dropbox_folder, '', file))
-        print('Downloaded %s' % file)
-
 
 def read_token():
     with open('token.txt', 'r') as f:
@@ -93,11 +9,17 @@ def read_token():
     token = token.strip()
     return token
 
-def download_dropbox():
+def download_folder(local_folder, remote_folder):
     token = read_token()
-    dbx = dropbox.Dropbox(token)
-    folder_name = '/קלטות של סבא'
-    download_folder(dbx, folder_name, 'F:/test')
+    dbx = DropboxManager(token)
+    dbx.download_folder(remote_folder, local_folder)
+    # dbx.list_files(remote_folder)
+
+def upload_folder(local_folder, bucket_name):
+    boto = boto_manager.BotoManager()
+    for file in os.listdir(local_folder):
+        boto.upload_file(bucket_name, local_folder + '/' + file, file)
+        print('Uploaded %s' % file)
 
 
 def glacier_tests():
@@ -107,18 +29,14 @@ def glacier_tests():
     for vault in l['VaultList']:
         print(vault)
 
-def stopwatch(message):
-    """Context manager to print how long a block of code took."""
-    t0 = time.time()
-    try:
-        yield
-    finally:
-        t1 = time.time()
-        print('Total elapsed time for %s: %.3f' % (message, t1 - t0))
-
 
 def main():
-    download_dropbox()
+    remote_folder = '/קלטות של סבא'
+    local_folder = 'Tapes'
+    bucket_name = 'saba-tapes'
+    download_folder(local_folder, remote_folder)
+    upload_folder(local_folder, bucket_name)
+
 
 
 if __name__ == "__main__":
