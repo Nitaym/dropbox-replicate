@@ -40,13 +40,12 @@ class BucketManager:
 
             if upload:
                 start = time.time()
-                with open(local_filename, 'wb') as f:
-                    self.upload_file(local_filename, file)
-                    time_elapsed = time.time() - start
-                    speed = file_size / time_elapsed
-                    speed, units = utils.good_units(speed)
-                    units += '/s'
-                    size, size_units = utils.good_units(file_size)
+                self.upload_file(local_filename, file)
+                time_elapsed = time.time() - start
+                speed = file_size / time_elapsed
+                speed, units = utils.good_units(speed)
+                units += '/s'
+                size, size_units = utils.good_units(file_size)
                 message += 'Uploaded. Size: %3.2f%s (%3.2f%s)' % (size, size_units, speed, units)
 
             print(message)
@@ -55,6 +54,5 @@ class BucketManager:
 
 if __name__ == "__main__":
     bucket = BucketManager('saba-tapes')
-    ls = bucket.get_file_list_iterator()
-    ls = {item.key:item for item in ls}
+    ls = bucket.get_file_list()
     print(ls)
