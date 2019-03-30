@@ -1,5 +1,5 @@
 from dropbox_manager import DropboxManager
-import boto_manager
+import bucket_manager
 import os
 
 def read_token():
@@ -16,10 +16,8 @@ def download_folder(local_folder, remote_folder):
     # dbx.list_files(remote_folder)
 
 def upload_folder(local_folder, bucket_name):
-    boto = boto_manager.BotoManager()
-    for file in os.listdir(local_folder):
-        boto.upload_file(bucket_name, local_folder + '/' + file, file)
-        print('Uploaded %s' % file)
+    bucket = bucket_manager.BucketManager(bucket_name)
+    bucket.upload_folder(local_folder)
 
 
 def glacier_tests():
@@ -34,7 +32,7 @@ def main():
     remote_folder = '/קלטות של סבא'
     local_folder = 'Tapes'
     bucket_name = 'saba-tapes'
-    download_folder(local_folder, remote_folder)
+    # download_folder(local_folder, remote_folder)
     upload_folder(local_folder, bucket_name)
 
 
