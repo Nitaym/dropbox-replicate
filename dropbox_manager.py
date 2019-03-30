@@ -3,8 +3,11 @@ import os
 import datetime
 import time
 import utils
+from multiprocessing.pool import ThreadPool
 
 class DropboxManager:
+    MAX_THREADS = 8
+
     def __init__(self, token):
         self.dbx = dropbox.Dropbox(token)
 
@@ -82,6 +85,9 @@ class DropboxManager:
         if not os.path.exists(local_folder):
             os.makedirs(local_folder)
 
+        download_list = []
+
+        # Scan files needed to be downloaded
         file_number = 0
         file_count = len(ls)
         for file in ls:
@@ -96,20 +102,35 @@ class DropboxManager:
                     message += 'File is identical on server and locally. Skipping. '
                     download = False
                 else:
-                    message += 'Overwriting file. '
+                    message += 'To be overwritten. '
 
             if download:
-
-                start = time.time()
-                with open(local_filename, 'wb') as f:
-                    data = self.download(dropbox_folder, '', file)
-                    f.write(data)
-                    time_elapsed = time.time() - start
-                    speed = len(data) / time_elapsed
-                    speed, units = utils.good_units(speed)
-                    units += '/s'
-                    size, size_units = utils.good_units(len(data))
-                message += 'Downloaded. Size: %3.2f%s (%3.2f%s)' % (size, size_units, speed, units)
-
+                download_list += [(dropbox_folder, local_filename, file_number)]
+                message += 'To be downloaded.'
             print(message)
             file_number += 1
+
+        total_download_count = len(download_list)
+        download_list = [download + (index, total_download_count, ) for download, index in zip(download_list, range(total_download_count))]
+
+        print("Starting %d downloads..." % total_download_count)
+        results = ThreadPool(self.MAX_THREADS).imap_unordered(self.parallel_download, download_list)
+        end_results = []
+        for result in results:
+            end_results += [result]
+
+    def parallel_download(self, params):
+        dropbox_folder, local_filename, file_number, total_files_count = params
+        start = time.time()
+        with open(local_filename, 'wb') as f:
+            file = os.path.basename(local_filename)
+            data = self.download(dropbox_folder, '', file)
+            f.write(data)
+            time_elapsed = time.time() - start
+            speed = len(data) / time_elapsed
+            speed, units = utils.good_units(speed)
+            units += '/s'
+            size, size_units = utils.good_units(len(data))
+        message = '[%d of %d - %s] ' % (file_number, total_files_count, file)
+        message = 'Downloaded. Size: %3.2f%s (%3.2f%s)' % (size, size_units, speed, units)
+        print(message)

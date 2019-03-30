@@ -1,6 +1,6 @@
 from dropbox_manager import DropboxManager
 import bucket_manager
-import os
+import time
 
 def read_token():
     with open('token.txt', 'r') as f:
@@ -35,6 +35,7 @@ def main():
     print("===============================================")
     print("Downloading from Dropbox...")
     download_folder(local_folder, remote_folder)
+    time.sleep(2)
     print("")
     print("===============================================")
     print("Uploading to S3...")
