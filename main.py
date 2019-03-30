@@ -32,7 +32,12 @@ def main():
     remote_folder = '/קלטות של סבא'
     local_folder = 'Tapes'
     bucket_name = 'saba-tapes'
-    # download_folder(local_folder, remote_folder)
+    print("===============================================")
+    print("Downloading from Dropbox...")
+    download_folder(local_folder, remote_folder)
+    print("")
+    print("===============================================")
+    print("Uploading to S3...")
     upload_folder(local_folder, bucket_name)
 
 
