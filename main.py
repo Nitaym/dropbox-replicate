@@ -42,7 +42,7 @@ def download(dbx, folder, subfolder, name):
         return None
 
     data = res.content
-    print(len(data), 'bytes; md:', md)
+    # print(len(data), 'bytes; md:', md)
     return data
 
 def list_files(dbx, folder):
@@ -55,16 +55,20 @@ def list_files(dbx, folder):
     while '//' in path:
         path = path.replace('//', '/')
     path = path.rstrip('/')
-    try:
-        res = dbx.files_list_folder(path)
-    except dropbox.exceptions.ApiError as err:
-        print('Folder listing failed for %s -- assumed empty: %s', (path, err))
-        return dict()
-    else:
-        rv = {}
-        for entry in res.entries:
-            rv[entry.name] = entry
-        return rv
+
+    rv = {}
+    has_more = True
+    while has_more:
+        try:
+            res = dbx.files_list_folder(path)
+        except dropbox.exceptions.ApiError as err:
+            print('Folder listing failed for %s -- assumed empty: %s', (path, err))
+            return dict()
+        else:
+            has_more = res.has_more
+            for entry in res.entries:
+                rv[entry.name] = entry
+    return rv
 
 
 def download_folder(dbx, dropbox_folder, local_folder):
