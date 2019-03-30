@@ -86,10 +86,12 @@ def read_token():
     with open('token.txt', 'r') as f:
         lines = f.readlines()
     token = lines[0]
+    token = token.strip()
     return token
 
 def download_dropbox():
-    dbx = dropbox.Dropbox(read_token())
+    token = read_token()
+    dbx = dropbox.Dropbox(token)
     folder_name = '/קלטות של סבא'
     download_folder(dbx, folder_name, 'F:/test')
 
