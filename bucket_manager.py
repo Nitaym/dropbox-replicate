@@ -6,6 +6,7 @@ import utils
 
 
 class BucketManager:
+    MAX_THREADS = 8
     def __init__(self, bucket_name):
         self.s3 = boto3.resource('s3')
         self.bucket = self.s3.Bucket(bucket_name)
@@ -29,7 +30,7 @@ class BucketManager:
             upload = True
             file_size = os.path.getsize(local_filename)
 
-            message = '[%d of %d - %s] ' % (file_number, file_count, file)
+            message = '[%d of %d - %s] ' % (file_number + 1, file_count, file)
             if file in remote_files:
                 remote_size = remote_files[file].size
                 if file_size == remote_size:
@@ -57,6 +58,7 @@ class BucketManager:
         size, size_units = utils.good_units(file_size)
         print('%s Uploading...  (Size: %3.2f%s)' % (preface, size, size_units))
         message += 'Uploaded. Size: %3.2f%s (%3.2f%s)' % (size, size_units, speed, units)
+        return 0
 if __name__ == "__main__":
     bucket = BucketManager('saba-tapes')
     ls = bucket.get_file_list()
