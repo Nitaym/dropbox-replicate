@@ -15,9 +15,9 @@ def download_folder(local_folder, remote_folder):
     dbx.download_folder(remote_folder, local_folder)
     # dbx.list_files(remote_folder)
 
-def upload_folder(local_folder, bucket_name):
+def upload_folder(local_folder, bucket_name, s3_folder_name):
     bucket = bucket_manager.BucketManager(bucket_name)
-    bucket.upload_folder(local_folder)
+    bucket.upload_folder(local_folder, s3_folder_name)
 
 
 def glacier_tests():
@@ -34,11 +34,11 @@ def main():
     bucket_name = 'saba-tapes'
     print("===============================================")
     print("Downloading from Dropbox...")
-    download_folder(local_folder, remote_folder)
+    # download_folder(local_folder, remote_folder)
     print("")
     print("===============================================")
     print("Uploading to S3...")
-    upload_folder(local_folder, bucket_name)
+    upload_folder(local_folder, bucket_name, 'Tapes')
 
 
 
