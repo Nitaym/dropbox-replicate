@@ -34,7 +34,7 @@ def main():
     bucket_name = 'saba-tapes'
     print("===============================================")
     print("Downloading from Dropbox...")
-    # download_folder(local_folder, remote_folder)
+    download_folder(local_folder, remote_folder)
     print("")
     print("===============================================")
     print("Uploading to S3...")
